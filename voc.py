@@ -1,15 +1,29 @@
 import pandas as pd 
 import cv2 as cv 
 import os 
-
-import utils 
-
+try:
+    from . import utils 
+except: 
+    import utils 
+    
 class VOC():
     def __init__(self, fdir, train=False):
         self.fdir = fdir 
         self.train = train
         self.paths = self._load_paths() #dataframe of img and lbl paths
 
+    def pull_item(self, idx, bformat='xywh'):
+        '''
+        returns: img, box, class
+        box: [x1, y1, w, h]
+        img: native shape, no transforms
+        '''
+        img = self._get_img(self.paths.iloc[[idx]].img.item())
+        boxes, classes = self._get_lbl(self.paths.iloc[[idx]].label.item())
+        if bformat == 'xyxy':
+            boxes = utils.get_xyxy(boxes)
+        return img, boxes, classes
+    
     def _load_paths(self):
         fpath = self.fdir + "/test.csv"
         if self.train:
@@ -33,19 +47,11 @@ class VOC():
             boxes.append(box[1:])
             classes.append(box[0])
         return boxes, classes 
-
-    def pull_item(self, idx, bformat='xywh'):
-        '''
-        returns: img, box, class
-        box = [x1, y1, w, h]
-        img = native shape, no transforms
-        '''
-        img = self._get_img(self.paths.iloc[[idx]].img.item())
-        boxes, classes = self._get_lbl(self.paths.iloc[[idx]].label.item())
-        if bformat == 'xyxy':
-            boxes = utils.get_xyxy(boxes)
-        return img, boxes, classes
-
+    
+    def __len__(self):
+        # print(self.paths.shape)
+        return len(self.paths)
+    
 if __name__ == '__main__':
     v = VOC("/home/server/Desktop/data/pascal_voc")
     img, boxes, classes = v.pull_item(0)

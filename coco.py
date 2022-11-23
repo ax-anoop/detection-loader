@@ -6,7 +6,18 @@ import json
 import os
 
 import utils 
+import sys, os
 
+# Don't like hidden prints in coco :/
+class HiddenPrints:
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
+        
 class CocoDetection():
     def __init__(self, root, train=False):
         self.train = train
@@ -15,9 +26,10 @@ class CocoDetection():
         if self.train:
             self.ann_file = root + "/annotations/instances_train2017.json"
             self.root = root + "/images/" + "train2017"
-        self.coco = COCO(self.ann_file)
+        with HiddenPrints():
+            self.coco = COCO(self.ann_file)
         self.ids = list(self.coco.imgs.keys())
-
+        
     def pull_item(self, index):
         """
         Args:
@@ -50,5 +62,6 @@ class CocoDetection():
 
 if __name__ == '__main__':
     v = CocoDetection("/home/server/Desktop/data/coco")
+    print(len(v))
     img, boxes, classes = v.pull_item(0)
-    print(boxes[0], classes[0])
+    # print(boxes[0], classes[0])
